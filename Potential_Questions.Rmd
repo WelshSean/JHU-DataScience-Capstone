@@ -1,0 +1,99 @@
+---
+title: "Potential Questions"
+author: "Sean Clarke"
+date: "16 October 2015"
+output: html_document
+---
+
+# 1. Do peoples reviews depend on events and/or seasons?
+
+* do people review bars around Superbowl/World Cup/
+* do people generally reivew things more positively when the sun is shining?
+* Do we see lots of holiday place reviews in summer
+
+## Data needed
+
+**review**
+**business**
+
+## Pros
+Fairly straightforwards to carry out analysis
+Interesting questions
+
+
+## Cons
+
+Not clear what the application is
+What would I want to predict?
+
+#2. Social Graph Analysis
+
+* Do friends like the same things
+* Is there a correlation between friends reviews
+* Do friends influence each other?
+
+## Data Needed
+
+**user**
+**business**
+**reviews**
+**tips**
+**checkin**
+
+## Pros
+
+Interesting
+potentially interesting findings from a business POV
+Lots of Applications
+
+## Cons
+
+Not sure how I'd go about it
+scope is huge
+
+#3 Analysis of review text
+
+* What words are associated with positive/negativ reviews
+* Predict number of stars from words
+
+## Data Needed
+
+**Reviews**
+**tips**
+**business**
+
+## Pros
+
+Very interesting
+Learn new techniques
+
+## Cons
+
+Not sure how to approach
+RIsk if I cant make it work
+
+
+#4 WHat opportunities are businesses missing?
+
+* Are they open during the time that people check-in to similar businesses
+* Are they missing services that similar businesses have
+* Do people complain about, like the existence of things they dont havr
+
+## Data Needed
+
+**checkins**
+**reviews**
+**business**
+**tips**
+
+## Pros
+
+Well defined
+Can be approachs in stages with gradually increasing risk
+well defined business question
+
+## Cons
+
+dunno!
+
+
