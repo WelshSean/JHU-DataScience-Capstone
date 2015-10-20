@@ -1,0 +1,34 @@
+---
+title: "Review Parse"
+author: "Sean Clarke"
+date: "20 October 2015"
+output: html_document
+---
+
+First of all lets load the Yelp Review data
+
+Qudos to this [Stack Exchange article](http://stackoverflow.com/questions/15506118/make-dataframe-of-top-n-frequent-terms-for-multiple-corpora-using-tm-package-in) for providing a great example.
+
+```{r}
+library(jsonlite)
+setwd("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/1pct_samples")
+set.seed(1974)
+review <- stream_in(file('review.json'))
+```
+
+Convert to Corpora
+
+```{r}
+review$corpus <- Corpus(VectorSource(review$text))
+```
+
+```{r}
+#review$corpus <- tm_map(review$corpus, tolower)
+review$corpus <- tm_map(review$corpus, content_transformer(tolower)) 
+review$corpus <- tm_map(review$corpus, content_transformer(removePunctuation)) 
+review$corpus <- tm_map(review$corpus, content_transformer(removeNumbers))
+review$corpus <- tm_map(review$corpus, content_transformer(stripWhitespace))
+myStopwords <- stopwords("english")
+review$corpus <- tm_map(review$corpus, removeWords, myStopwords)
+review$corpus <- tm_map(review$corpus, content_transformer(PlainTextDocument))
+```
