@@ -4,7 +4,7 @@ author: "Sean Clarke"
 date: "20 October 2015"
 output: html_document
 ---
-
+THis document is a scratchpad of ideas to allow me to hash out how to approach this piece of work.
 First of all lets load the Yelp Review data
 
 Qudos to this [Stack Exchange article](http://stackoverflow.com/questions/15506118/make-dataframe-of-top-n-frequent-terms-for-multiple-corpora-using-tm-package-in) for providing a great example.
@@ -22,6 +22,9 @@ Convert to Corpora
 
 ```{r}
 library(tm)
+library(caret)
+library(rpart)
+library(rpart.plot)
 review$corpus <- Corpus(VectorSource(review$text))
 ```
 
@@ -32,6 +35,7 @@ review$corpus <- tm_map(review$corpus, content_transformer(removePunctuation))
 review$corpus <- tm_map(review$corpus, content_transformer(removeNumbers))
 review$corpus <- tm_map(review$corpus, content_transformer(stripWhitespace))
 myStopwords <- stopwords("english")
+myStopwords <- c(myStopwords, "they", "but", "and", "for", "get", "just")
 review$corpus <- tm_map(review$corpus, removeWords, myStopwords)
 review$corpus <- tm_map(review$corpus, content_transformer(PlainTextDocument))
 ```
@@ -41,7 +45,8 @@ Convert processed corpora to term document matrix:
 
 ```{r}
 #tdm <- TermDocumentMatrix((review[1,]$corpus))
-tdm <- TermDocumentMatrix((review$corpus))
+#tdm <- TermDocumentMatrix((review$corpus))
+tdm <- DocumentTermMatrix((review$corpus))
 ```
 
 Lets find only words that occur in more than 1% of reviews
@@ -52,4 +57,55 @@ sparse <- removeSparseTerms(tdm, 0.99)
 We can find frequent terms
 ```{r}
 findFreqTerms(sparse, 10, Inf)
+```
+
+
+Lets get ready to model it
+
+```{r}
+tdmDF <- as.data.frame(as.matrix(sparse))
+tdmDF$stars <- as.factor(review$stars)
+```
+
+Create train and test
+
+```{r}
+inTrain <- createDataPartition(y = tdmDF$stars, p = 0.6, list = FALSE)
+training <- tdmDF[inTrain,]
+testing <- tdmDF[-inTrain,]
+```
+
+
+Build model from training set
+
+```{r}
+set.seed(9347)
+cartModelFit <- rpart(stars ~ ., data = training, method = "class")
+## Plot the tree
+prp(cartModelFit)
+```
+
+Evaluate confusion matrix for testing set
+
+```{r}
+cartPredict <- predict(cartModelFit, newdata = testing, type = "class")
+cartCM <- confusionMatrix(cartPredict, testing$stars)
+cartCM
+```
+
+
+We can also build a wordcloud
+
+```{r}
+library(wordcloud)
+dtm2 <- as.matrix(sparse)
+freq <- colSums(dtm2)
+words <- names(freq)
+wordcloud(words[1:100], freq[1:100])
+```
+
+Or get a wordcloud direct from the Corpus
+
+```{r}
+wordcloud(review$corpus, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0.35, use.r.layout=FALSE, colors=brewer.pal(8, "Dark2") )
 ```
