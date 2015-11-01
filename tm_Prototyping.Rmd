@@ -9,7 +9,9 @@ First of all lets load the Yelp Review data
 
 Qudos to this [Stack Exchange article](http://stackoverflow.com/questions/15506118/make-dataframe-of-top-n-frequent-terms-for-multiple-corpora-using-tm-package-in) for providing a great example.
 
-```{r}
+[Useful reference](https://www.kaggle.com/amhchiu/whats-cooking/bag-of-ingredients-in-r/run/71436/code)
+
+```{r message=FALSE, warning=FALSE}
 library(jsonlite)
 setwd("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/1pct_samples")
 set.seed(1974)
@@ -19,6 +21,7 @@ review <- stream_in(file('review.json'))
 Convert to Corpora
 
 ```{r}
+library(tm)
 review$corpus <- Corpus(VectorSource(review$text))
 ```
 
@@ -31,4 +34,22 @@ review$corpus <- tm_map(review$corpus, content_transformer(stripWhitespace))
 myStopwords <- stopwords("english")
 review$corpus <- tm_map(review$corpus, removeWords, myStopwords)
 review$corpus <- tm_map(review$corpus, content_transformer(PlainTextDocument))
+```
+
+
+Convert processed corpora to term document matrix:
+
+```{r}
+#tdm <- TermDocumentMatrix((review[1,]$corpus))
+tdm <- TermDocumentMatrix((review$corpus))
+```
+
+Lets find only words that occur in more than 1% of reviews
+```{r}
+sparse <- removeSparseTerms(tdm, 0.99)
+```
+
+We can find frequent terms
+```{r}
+findFreqTerms(sparse, 10, Inf)
 ```
