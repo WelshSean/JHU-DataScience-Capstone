@@ -109,3 +109,10 @@ Or get a wordcloud direct from the Corpus
 ```{r}
 wordcloud(review$corpus, scale=c(5,0.5), max.words=100, random.order=FALSE, rot.per=0.35, use.r.layout=FALSE, colors=brewer.pal(8, "Dark2") )
 ```
+
+THis is also fun!
+
+#```{r}
+#library(ggmap)
+#qmplot(longitude, latitude, data=business, colour = I('red'), size = I(3), darken = .3)
+#```
