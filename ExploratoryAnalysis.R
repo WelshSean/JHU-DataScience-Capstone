@@ -8,3 +8,6 @@ unique(joined$stars)
 
 z <- data.frame(table(unlist(head(joined$categories,n=1000000))))    # Count categories
 topCats <- head(z[order(z$Freq, decreasing=T), ], n = 20)               # List cats in order
+
+#library(ggplot2)
+#ggplot(topCats, aes(x=Var1 )) + geom_bar()
