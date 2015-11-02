@@ -16,5 +16,6 @@ October 2015 Capstone from the Johns Hopkins University Data Science Specialisat
 		process_data()
 
 You should now have an .rda file in the same directory as your yelp dataset, this can be loaded using load
+
 		load("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/yelpdata.rda")
 		
