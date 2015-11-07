@@ -41,7 +41,7 @@ ggplot(data=topCats, aes(x=Var1, y=Freq)) +
 
 Lets concentrate on restaurants
 
-```{r}
+```{r cache=TRUE}
 yelpdata <- yelpdata[grepl( "^.*[Rr]estaurant.*",  yelpdata$categories),]
 ```
 
@@ -76,16 +76,30 @@ KHL     UK - Edinburgh
 NW      Germany
 
 ```{r}
-yelpdata <- mutate(yelpdata, country= derivedFactor(
-               "DE" = state %in% c("NW", "RP", "BW"),
-               "UK" = state %in% c("EDH", "MLN", "FIF", "ELN", "XGL"),
-               "CA" = state %in% c("QC", "ON"),
-                 .method = "first",
-                 .default = "US"
-             )
-)
-
 yelpdata %>%
   group_by(country) %>%
   summarise(length(country))
+```
+
+Typical reviews by area
+
+```{r}
+yelpdata %>%
+  group_by(state, country) %>%
+  summarise(meanstars=mean(stars))
+```
+
+```{r}
+library(ggmap)
+qmplot(longitude, latitude, data=yelpdata[yelpdata$state=="EDH",], color = stars, size = I(3), darken = .3)
+```
+
+```{r}
+library(ggmap)
+qmplot(longitude, latitude, data=yelpdata[yelpdata$country=="US",], color = stars, size = I(3), darken = .3)
+```
+
+```{r}
+library(ggmap)
+qmplot(longitude, latitude, data=yelpdata[yelpdata$city=="Karlsruhe",], color = stars, size = I(3), darken = .3)
 ```

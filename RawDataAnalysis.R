@@ -3,6 +3,7 @@ processDat <- function(sourceDir="/Users/Sean/Coursera_DataScience/JHU-DataScien
   
 library(jsonlite)
 library(dplyr)
+library(caret)
 setwd(sourceDir)
 set.seed(1974)
 
@@ -29,11 +30,50 @@ review[c("type", "review_id", "votes")] <- list(NULL) # Remove unwanted columns
 
 yelpdata <- inner_join(review, business)
 
+# Add a column detailing country
+
+yelpdata <- mutate(yelpdata, country= derivedFactor(
+  "DE" = state %in% c("NW", "RP", "BW"),
+  "UK" = state %in% c("EDH", "MLN", "FIF", "ELN", "XGL", "KHL"),
+  "CA" = state %in% c("QC", "ON"),
+  .method = "first",
+  .default = "US"
+)
+)
+
 ## Now save data into a .rda file
 
 fname <- paste(sourceDir, "yelpdata.rda", sep="/")
 
 save(yelpdata, file=fname )
+
+
+## Generate training, test and validation datasets in 60/20/20 ratio
+
+set.seed(1974)
+trainIndex <- createDataPartition(yelpdata$stars, p = .6,
+                                  list = FALSE,
+                                  times = 1)
+yelptrain <- yelpdata[trainIndex,]
+remainder <- yelpdata[-trainIndex,]
+
+validationIndex <- createDataPartition(remainder$stars, p = .5,
+                                  list = FALSE,
+                                  times = 1)
+
+yelpvalidation <- remainder[validationIndex,]
+yelptest <- remainder[-validationIndex,]
+
+
+fname <- paste(sourceDir, "yelptrain.rda", sep="/")
+save(yelptrain, file=fname )
+
+fname <- paste(sourceDir, "yelpvalidation.rda", sep="/")
+save(yelpvalidation, file=fname )
+
+fname <- paste(sourceDir, "yelptest.rda", sep="/")
+save(yelptest, file=fname )
+
 
 }
 
