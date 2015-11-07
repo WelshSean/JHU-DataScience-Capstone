@@ -1,0 +1,91 @@
+---
+title: "Yelp data Exploratory analysis"
+author: "Sean Clarke"
+date: "7 November 2015"
+output: html_document
+---
+
+
+```{R cache=TRUE}
+load("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/yelpdata.rda")
+```
+
+```{r}
+library(ggplot2)
+library(mosaic)
+```
+
+Look for NAs
+
+```{r}
+colSums(is.na(yelpdata))
+```
+
+Is the stars coulmn clean
+
+```{r}
+unique(yelpdata$stars)
+```
+
+[THis is useful Useful!!!](https://www.yelp.com/developers/documentation/v2/all_category_list)
+
+Find the top categories
+
+```{r}
+z <- data.frame(table(unlist(head(yelpdata$categories,n=1000000))))    # Count categories
+topCats <- head(z[order(z$Freq, decreasing=T), ], n = 10)               # List cats in order
+
+ggplot(data=topCats, aes(x=Var1, y=Freq)) +
+  geom_bar(stat="identity")  + xlab("Category") + ylab("Number of Occurences") + theme(axis.text.x=element_text(angle=90, size=10, vjust=0.5))
+```
+
+Lets concentrate on restaurants
+
+```{r}
+yelpdata <- yelpdata[grepl( "^.*[Rr]estaurant.*",  yelpdata$categories),]
+```
+
+How does the geographical distribution look?
+
+
+```{r}
+unique(yelpdata$state)
+#[1] "PA"  "NC"  "SC"  "WI"  "IL"  "AZ"  "NV"  "QC"  "ON"  "EDH" "MLN" "FIF" "ELN" "XGL" "BW"  "RP"  "KHL" "NW" 
+```
+
+
+WHere do those weird states map to?
+
+PA      US - Philadelphia
+NC      US - North Carolina
+SC      US - South Carolina
+WI      US - Wisconsin
+IL      US - Illinois
+AZ      US - Arizona
+NV      US - Nevada
+QC      Canada - Quebec
+ON      Canada - Ontario
+EDH     UK - Edinburgh
+MLN     UK - Midlothian
+FIF     UK - Fife
+ELN     UK - Elgin? (Musselburgh)
+XGL     UK - Edinburgh
+BW      Germany - Ettlingen
+RP      Germany
+KHL     UK - Edinburgh
+NW      Germany
+
+```{r}
+yelpdata <- mutate(yelpdata, country= derivedFactor(
+               "DE" = state %in% c("NW", "RP", "BW"),
+               "UK" = state %in% c("EDH", "MLN", "FIF", "ELN", "XGL"),
+               "CA" = state %in% c("QC", "ON"),
+                 .method = "first",
+                 .default = "US"
+             )
+)
+
+yelpdata %>%
+  group_by(country) %>%
+  summarise(length(country))
+```

@@ -27,13 +27,13 @@ review[c("type", "review_id", "votes")] <- list(NULL) # Remove unwanted columns
 
 ## Now join datasets together
 
-joined <- inner_join(review, business)
+yelpdata <- inner_join(review, business)
 
 ## Now save data into a .rda file
 
 fname <- paste(sourceDir, "yelpdata.rda", sep="/")
 
-save(joined, file=fname )
+save(yelpdata, file=fname )
 
 }
 
