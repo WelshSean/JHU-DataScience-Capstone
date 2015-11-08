@@ -4,6 +4,7 @@ processDat <- function(sourceDir="/Users/Sean/Coursera_DataScience/JHU-DataScien
 library(jsonlite)
 library(dplyr)
 library(caret)
+library(mosaic)
 setwd(sourceDir)
 set.seed(1974)
 
@@ -66,13 +67,16 @@ yelptest <- remainder[-validationIndex,]
 
 
 fname <- paste(sourceDir, "yelptrain.rda", sep="/")
-save(yelptrain, file=fname )
+yelpreviews <- yelptrain
+save(yelpreviews, file=fname )
 
 fname <- paste(sourceDir, "yelpvalidation.rda", sep="/")
-save(yelpvalidation, file=fname )
+yelpreviews <- yelpvalidation
+save(yelpreviews, file=fname )
 
 fname <- paste(sourceDir, "yelptest.rda", sep="/")
-save(yelptest, file=fname )
+yelpreviews <- yelptest
+save(yelpreviews, file=fname )
 
 
 }

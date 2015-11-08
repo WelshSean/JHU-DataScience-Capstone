@@ -1,0 +1,65 @@
+Example 1
+
+
+tdm <- TermDocumentMatrix((review[1,]$corpus))
+
+> review[1,]$text
+[1] "Having certain businesses with skill sets in your local neighborhood is important.  I try to keep it as local as possible, so when I heard about a tailor in Carnegie I was intrigued.  The building is in a strip mall across from Carnegie Coffee Company.  Unassuming, looks like it is closed all the time, until you do a drive by and see the hours posted.  There is a Latino man in his 20's working when you arrive.  In my mind, I imagine a tailor to be older, kind of like my grandfather maybe with measuring tape around his neck (Textbook movie tailor), so I was a bit trepidatious about dropping off my clothing.  He asks you to go change into a closet (Yes, a closet to change in with one lightbulb) BUT all my worries aside, the moment he started working on my items I knew he was the real deal. He learned from his father at the age of 14 how to sew. and he does things the correct way.  Meaning, for example-  I took in a pair of khakis all the way down to the cuff, but he seamed them up to look EXACTLY the way they were when I first bought them.  Most placed will have bulges and puckers.  The rest of my items were just as perfect.  Very inexpensive at $10 for a pair of pants to adjust the hem.  The items were done in a timely manner.  He takes his business very seriously.  While I was there, I watched a lady rush in and demand 6 shirts to be altered in an hour, and he did it and charged the same price.  Really nice guy, please go and support this business to keep him around town!
+
+> head(tdm$dimnames$Terms,30)
+ [1] "across"     "adjust"     "age"        "altered"    "around"     "arrive"     "aside"      "asks"       "bit"       
+[10] "bought"     "building"   "bulges"     "business"   "businesses" "carnegie"   "certain"    "change"     "charged"   
+[19] "closed"     "closet"     "clothing"   "coffee"     "company"    "correct"    "cuff"       "deal"       "demand"    
+[28] "done"       "drive"      "dropping"
+
+> head(tdm$v,30)
+ [1] 1 1 1 1 2 1 1 1 1 1 1 1 2 1 2 1 2 1 1 2 1 1 1 1 1 1 1 1 1 1
+ 
+ so v gives you how many times the relevant word is in the bag of words
+ 
+ 
+ Example 2
+ 
+ > review[1:3,]$text
+[1] "Having certain businesses with skill sets in your local neighborhood is important.  I try to keep it as local as possible, so when I heard about a tailor in Carnegie I was intrigued.  The building is in a strip mall across from Carnegie Coffee Company.  Unassuming, looks like it is closed all the time, until you do a drive by and see the hours posted.  There is a Latino man in his 20's working when you arrive.  In my mind, I imagine a tailor to be older, kind of like my grandfather maybe with measuring tape around his neck (Textbook movie tailor), so I was a bit trepidatious about dropping off my clothing.  He asks you to go change into a closet (Yes, a closet to change in with one lightbulb) BUT all my worries aside, the moment he started working on my items I knew he was the real deal. He learned from his father at the age of 14 how to sew. and he does things the correct way.  Meaning, for example-  I took in a pair of khakis all the way down to the cuff, but he seamed them up to look EXACTLY the way they were when I first bought them.  Most placed will have bulges and puckers.  The rest of my items were just as perfect.  Very inexpensive at $10 for a pair of pants to adjust the hem.  The items were done in a timely manner.  He takes his business very seriously.  While I was there, I watched a lady rush in and demand 6 shirts to be altered in an hour, and he did it and charged the same price.  Really nice guy, please go and support this business to keep him around town!"
+[2] "The food is good. Unfortunately the service is very hit or miss. The main issue seems to be with the kitchen, the waiters and waitresses are often very apologetic for the long waits and it's pretty obvious that some of them avoid the tables after taking the initial order to avoid hearing complaints."                                                                                                                                                        
+[3] "I don't know why, but I just can't like this location very much.  I lived in the area for a little over three years and would always go to another GE before this one.  Maybe it's the way it's set up or maybe it's the way that the lighting seems so very dim.\n\nThe selection is typical for any GE, broad and expansive.  Some prices are a bit steep.  \n\nThis location, like many others, has expanded their pharmacy/health care area.  Which is nice, it saves an extra trip to a drug store." 
+
+> head(tdm$dimnames$Terms,30)
+ [1] "across"     "adjust"     "age"        "altered"    "always"     "another"    "apologetic" "area"       "around"    
+[10] "arrive"     "aside"      "asks"       "avoid"      "bit"        "bought"     "broad"      "building"   "bulges"    
+[19] "business"   "businesses" "cant"       "care"       "carnegie"   "certain"    "change"     "charged"    "closed"    
+[28] "closet"     "clothing"   "coffee"    
+
+> tdm$v[grepl(3, tdm$i)]
+ [1] 1 1 2 1 1 1 1 1 1 1 1 1 1 1 1 2 1 1 2 1 2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 1
+> tdm$j[grepl(3, tdm$i)]
+ [1]   5   6   8  14  16  21  22  37  39  42  45  46  47  72  77  78  79  80  82  90  91  98 101 105 107 111 118 124 127
+[30] 128 131 137 138 148 154 156 163 167
+
+
+am <- as.matrix(tdm)
+
+> am[,1:10]
+    Terms
+Docs across adjust age altered always another apologetic area around arrive
+   1      1      1   1       1      0       0          0    0      2      1
+   2      0      0   0       0      0       0          1    0      0      0
+   3      0      0   0       0      1       1          0    2      0      0
+
+ad <- as.data.frame(am)
+
+> ad[,1:10]
+  across adjust age altered always another apologetic area around arrive
+1      1      1   1       1      0       0          0    0      2      1
+2      0      0   0       0      0       0          1    0      0      0
+3      0      0   0       0      1       1          0    2      0      0
+
+DocumentTermMatrix -> Bag of works
+
+tdm$i     = Row (document)
+tdm$j     = Column (word)
+tdmv      = Count
+tdm$dimnames$Terms => Words
+tdm$dimnames$Docs => Doc Ref
+ 
