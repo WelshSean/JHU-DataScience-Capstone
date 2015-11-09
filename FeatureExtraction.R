@@ -1,20 +1,15 @@
-extractFeatures <- function(phase="train", sourceDir="/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/1pct_samples")
+extractFeatures <- function(yelpDF)
 {
 
-library(tm)
-library(caret)
-library(rpart)
-library(rpart.plot)
+# Input - Dataframe containing Yelp data as created by RawDataAnalysis.R
   
-set.seed(1974)
+# Output
+#          List Element 1  Dataframe containing bag of words, star ratings and business IDs
+#          List Element 2 Document Term Matrix
+  
+library(tm)
 
-fname=paste("yelp",phase,".rda", sep="")
-varname=paste("yelp", phase, sep="")
-fpath=paste(sourceDir, fname, sep="/")
-print(fpath)
-
-load(fpath)  
-yelpreviews$corpus <- Corpus(VectorSource(yelpreviews$text))
+yelpreviews$corpus <- Corpus(VectorSource(yelpDF$text))
 
 # Tidy up words as much as possible
 
@@ -39,6 +34,9 @@ tdmDF <- as.data.frame(as.matrix(tdm))
 tdmDF$stars <- as.factor(yelpreviews$stars)
 tdmDF$business_id <- as.factor(yelpreviews$business_id)
 
-return(tdmDF)
+retlist <- list()
+retlist[[1]] <- tdmDF
+retlist[[2]] <- tdm
+return(retlist)
 
 }
