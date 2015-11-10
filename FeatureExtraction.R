@@ -31,7 +31,7 @@ tdm <- DocumentTermMatrix((yelpreviews$corpus))
 tdm <- removeSparseTerms(tdm, 0.99)
 
 tdmDF <- as.data.frame(as.matrix(tdm))
-tdmDF$stars <- as.factor(yelpreviews$stars)
+tdmDF$number_stars <- as.factor(yelpreviews$stars)
 tdmDF$business_id <- as.factor(yelpreviews$business_id)
 
 retlist <- list()

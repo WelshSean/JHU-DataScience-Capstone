@@ -42,7 +42,15 @@ if (file.exists(trainpath)){
 #  predicted <- c(predicted, predict(cartfit, foldtest, method="class"))
 #}
 
+trn <- trainingData[[1]] 
+trn$number_stars <- as.numeric(as.character(trn$number_stars))
 
-cartModelFit <- rpart(stars ~ . -business_id, data = trainingData[[1]], method = "class")
-#cartPredict <- predict(cartModelFit, newdata = trainingData[[1]], type = "class")
-#cartCM <- confusionMatrix(cartPredict, trainingData[[1]]$stars)
+
+lmFit <- lm(number_stars ~ . -business_id, data = trn)
+lmPredict <- predict(lmFit, newdata = trn)
+lmCM <- confusionMatrix(table(factor(lmPredict, levels=min(trn$number_stars):max(trn$number_stars)),factor(trn$number_stars, levels=min(trn$number_stars):max(trn$number_stars))))
+
+cartModelFit <- rpart(number_stars ~ . -business_id -number_stars, data = trn, method = "class")
+
+cartPredict <- predict(cartModelFit, newdata = trn, type = "class")
+cartCM <- confusionMatrix(cartPredict, trn$number_stars)
