@@ -103,16 +103,5 @@ summary(resultsLM$Difference)
 sqrt(mean((resultsLM$observed - resultsLM$predicted)^2))
 nrow(subset(resultsLM, resultsLM$observed==resultsLM$predicted))*100/nrow(resultsLM)
 
-#trn <- trainingData[[1]] 
-#trn$number_stars <- as.numeric(as.character(trn$number_stars))
-
-### lm cant handle number_stars as factor
-#lmFit <- lm(number_stars ~ . -business_id, data = trn)
-#lmPredict <- predict(lmFit, newdata = trn)
-#lmCM <- confusionMatrix(table(factor(lmPredict, levels=min(trn$number_stars):max(trn$number_stars)),factor(trn$number_stars, levels=min(trn$number_stars):max(trn$number_stars))))
-
-
-### cart can handle nstars as factor
-#cartModelFit <- rpart(number_stars ~ . -business_id -number_stars, data = trn, method = "class")
 
 
