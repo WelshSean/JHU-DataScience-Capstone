@@ -32,7 +32,7 @@ trn <- trainingData[[1]]
 rm(trainingData)
 
 # K-Fold Validation
-numfolds=2
+numfolds=10
 observed <- c()
 predicted <- c()
 folds <- createFolds(y=trn$number_stars, k=numfolds, list = TRUE, returnTrain = TRUE)
@@ -70,7 +70,8 @@ for (i in 1:numfolds){
   print(j)
   RFfit <- randomForest(foldtrain[-j], foldtrain[[j]], method="class")
   observed <- c(observed, foldtest$number_stars)
-  predicted <- c(predicted, predict(RFfit, newdata=foldtest[-j], type="class"))
+  k <- match("number_stars", names(foldtest))
+  predicted <- c(predicted, predict(RFfit, newdata=foldtest[-k], type="class"))
 }
 
 resultsRF <- as.data.frame(cbind(observed,predicted))
@@ -80,7 +81,27 @@ summary(resultsRF$Difference)
 sqrt(mean((resultsRF$observed - resultsRF$predicted)^2))
 nrow(subset(resultsRF, resultsRF$observed==resultsRF$predicted))*100/nrow(resultsRF)
 
+# Linear model
 
+for (i in 1:numfolds){
+  foldtrain <- trn[folds[[i]],]
+  foldtest <- trn[-folds[[i]],]
+  foldtrain$business_id <- NULL
+  foldtest$business_id <- NULL
+  foldtrain$number_stars <- as.numeric(as.character(foldtrain$number_stars))
+  foldtest$number_stars <- as.numeric(as.character(foldtest$number_stars))
+  lmfit <- lm(number_stars ~ . , data = foldtrain)
+  observed <- c(observed, foldtest$number_stars)
+  k <- match("number_stars", names(foldtest))
+  predicted <- c(predicted, predict(lmfit, newdata=foldtest[-k]))
+}
+
+resultsLM <- as.data.frame(cbind(observed,predicted))
+names(resultsLM) <- c("observed", "predicted")
+resultsLM$Difference <- resultsLM$observed - resultsLM$predicted
+summary(resultsLM$Difference)
+sqrt(mean((resultsLM$observed - resultsLM$predicted)^2))
+nrow(subset(resultsLM, resultsLM$observed==resultsLM$predicted))*100/nrow(resultsLM)
 
 #trn <- trainingData[[1]] 
 #trn$number_stars <- as.numeric(as.character(trn$number_stars))
@@ -94,14 +115,4 @@ nrow(subset(resultsRF, resultsRF$observed==resultsRF$predicted))*100/nrow(result
 ### cart can handle nstars as factor
 #cartModelFit <- rpart(number_stars ~ . -business_id -number_stars, data = trn, method = "class")
 
-#cartPredict <- predict(cartModelFit, newdata = trn, type = "class")
-#cartCM <- confusionMatrix(cartPredict, trn$number_stars)
 
-# rf doesnt like formula notation here and doesnt like business_id being included!
-
-#trn2 <- trn
-#trn2$business_id <- NULL
-#i <- match("number_stars", names(trn2))
-#rfFit <- randomForest(trn2[-i], trn2[[i]])
-#rfPredict <- predict(rfFit, newdata = trn2, type = "class")
-#rfCM <- confusionMatrix(rfPredict, trn2$number_stars)
