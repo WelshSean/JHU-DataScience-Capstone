@@ -12,11 +12,12 @@ setwd("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone")
 
 
 # Load Training Data
-#PATH="/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/1pct_samples"
-PATH="/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset"
+PATH="/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/1pct_samples"
+#PATH="/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset"
 load(paste(PATH, "yelptrain.rda", sep="/"))
 
 trainpath <- paste(PATH, "trainingdata.rda", sep="/")
+
 
 if (file.exists(trainpath)){
   print("Loading Training data from file") 
@@ -28,39 +29,28 @@ if (file.exists(trainpath)){
   save(trainingData, file=trainpath)
 }
 
-trn <- trainingData[[1]] 
+training <- trainingData[[1]] 
 rm(trainingData)
+number_stars_index <- match("number_stars", names(training))
+business_id_index <- match("business_id", names(training))
 
-# K-Fold Validation
-numfolds=10
-observed <- c()
-predicted <- c()
-folds <- createFolds(y=trn$number_stars, k=numfolds, list = TRUE, returnTrain = TRUE)
 
-# rpart with default values
+rpartfit <- rpart(number_stars ~ . -business_id, data=training, method="class")
 
-for (i in 1:numfolds){
-  print(paste("Rpart", i))
-  foldtrain <- trn[folds[[i]],]
-  foldtest <- trn[-folds[[i]],]
-  ##last <- ncol(foldtest)
-  cartfit <- rpart(number_stars ~ . -business_id, data=foldtrain, method="class")
-  observed <- c(observed, foldtest$number_stars)
-  i <- match("number_stars", names(foldtest))
-  predicted <- c(predicted, predict(cartfit, newdata=foldtest[-i], type="class"))
-}
 
-cartRes <- c()
-
-resultsCart <- as.data.frame(cbind(observed,predicted))
-names(resultsCart) <- c("observed", "predicted")
-resultsCart$Difference <- resultsCart$observed - resultsCart$predicted
-cartRes$summary <- summary(resultsCart$Difference)
-cartRes$RMSError <- sqrt(mean((resultsCart$observed - resultsCart$predicted)^2))
-cartRes$ExactMatch <- nrow(subset(resultsCart, resultsCart$observed==resultsCart$predicted))*100/nrow(resultsCart)
-
-Cartpath <- paste(PATH, "Carttraining.rda", sep="/")
-save(resultsCart, cartRes, file = Cartpath)
+predicted <- predict(rpartfit, newdata=training[-number_stars_index], type="class")
+ 
+rpartRes <- c()
+ 
+rpartRes$Predictions <- as.data.frame(cbind(training$number_stars,predicted))
+names(rpartRes$Predictions) <- c("observed", "predicted")
+rpartRes$Predictions$Difference <- rpartRes$Predictions$observed - rpartRes$Predictions$predicted
+rpartRes$summary <- summary(rpartRes$Predictions$Difference)
+rpartRes$RMSError <- sqrt(mean((rpartRes$Predictions$Difference)^2))
+rpartRes$ExactMatch <- nrow(subset(rpartRes$Predictions, rpartRes$Predictions$observed==rpartRes$Predictions$predicted))*100/nrow(rpartRes$Predictions)
+ 
+rpartpath <- paste(PATH, "rparttraining.rda", sep="/")
+save(rpartRes, rpartfit, file = rpartpath)
 
 # # Random Forest with default values
 # 
@@ -71,23 +61,26 @@ save(resultsCart, cartRes, file = Cartpath)
 #   foldtrain$business_id <- NULL
 #   foldtest$business_id <- NULL
 #   ##last <- ncol(foldtest)
-#   j <- match("number_stars", names(foldtrain))
+#   j <- match("number_stars", names(training))
 #   print(j)
-#   RFfit <- randomForest(foldtrain[-j], foldtrain[[j]], method="class")
+  RFfit <- randomForest(training[-c(number_stars_index, business_id_index)], training[[number_stars_index]], method="class")
 #   observed <- c(observed, foldtest$number_stars)
 #   k <- match("number_stars", names(foldtest))
-#   predicted <- c(predicted, predict(RFfit, newdata=foldtest[-k], type="class"))
+  predicted <- predict(RFfit, newdata=training[-c(number_stars_index)], type="class")
 # }
 # 
-# RFRes <- c()
+RFRes <- c()
 # 
-# resultsRF <- as.data.frame(cbind(observed,predicted))
-# names(resultsRF) <- c("observed", "predicted")
-# resultsRF$Difference <- resultsRF$observed - resultsRF$predicted
-# RFRes$summary <- summary(resultsRF$Difference)
-# RFRes$RMSError <- sqrt(mean((resultsRF$observed - resultsRF$predicted)^2))
-# RFRes$ExactMatch <- nrow(subset(resultsRF, resultsRF$observed==resultsRF$predicted))*100/nrow(resultsRF)
-# 
+RFRes$Predictions <- as.data.frame(cbind(training$number_stars,predicted))
+names(RFRes$Predictions) <- c("observed", "predicted")
+RFRes$Predictions$Difference <- RFRes$Predictions$observed - RFRes$Predictions$predicted
+RFRes$summary <- summary(RFRes$Predictions$Difference)
+RFRes$RMSError <- sqrt(mean((RFRes$Predictions$Difference)^2))
+RFRes$ExactMatch <- nrow(subset(RFRes$Predictions, RFRes$Predictions$observed==RFRes$Predictions$predicted))*100/nrow(RFRes$Predictions)
+
+RFpath <- paste(PATH, "RFtraining.rda", sep="/")
+save(RFRes, RFfit, file = RFpath)
+
 # # Linear model
 # 
 # for (i in 1:numfolds){
