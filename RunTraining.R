@@ -34,6 +34,7 @@ rm(trainingData)
 number_stars_index <- match("number_stars", names(training))
 business_id_index <- match("business_id", names(training))
 
+# Recursive Partitioning with default settings
 
 rpartfit <- rpart(number_stars ~ . -business_id, data=training, method="class")
 
@@ -52,25 +53,14 @@ rpartRes$ExactMatch <- nrow(subset(rpartRes$Predictions, rpartRes$Predictions$ob
 rpartpath <- paste(PATH, "rparttraining.rda", sep="/")
 save(rpartRes, rpartfit, file = rpartpath)
 
-# # Random Forest with default values
-# 
-# for (i in 1:numfolds){
-#   print(paste("RF", i))
-#   foldtrain <- trn[folds[[i]],]
-#   foldtest <- trn[-folds[[i]],]
-#   foldtrain$business_id <- NULL
-#   foldtest$business_id <- NULL
-#   ##last <- ncol(foldtest)
-#   j <- match("number_stars", names(training))
-#   print(j)
-  RFfit <- randomForest(training[-c(number_stars_index, business_id_index)], training[[number_stars_index]], method="class")
-#   observed <- c(observed, foldtest$number_stars)
-#   k <- match("number_stars", names(foldtest))
-  predicted <- predict(RFfit, newdata=training[-c(number_stars_index)], type="class")
-# }
-# 
+# Random Forest with default values
+
+RFfit <- randomForest(training[-c(number_stars_index, business_id_index)], training[[number_stars_index]], method="class")
+ 
+predicted <- predict(RFfit, newdata=training[-c(number_stars_index)], type="class")
+ 
 RFRes <- c()
-# 
+ 
 RFRes$Predictions <- as.data.frame(cbind(training$number_stars,predicted))
 names(RFRes$Predictions) <- c("observed", "predicted")
 RFRes$Predictions$Difference <- RFRes$Predictions$observed - RFRes$Predictions$predicted
@@ -81,30 +71,26 @@ RFRes$ExactMatch <- nrow(subset(RFRes$Predictions, RFRes$Predictions$observed==R
 RFpath <- paste(PATH, "RFtraining.rda", sep="/")
 save(RFRes, RFfit, file = RFpath)
 
-# # Linear model
-# 
-# for (i in 1:numfolds){
-#   print(paste("lm", i))
-#   foldtrain <- trn[folds[[i]],]
-#   foldtest <- trn[-folds[[i]],]
-#   foldtrain$business_id <- NULL
-#   foldtest$business_id <- NULL
-#   foldtrain$number_stars <- as.numeric(as.character(foldtrain$number_stars))
-#   foldtest$number_stars <- as.numeric(as.character(foldtest$number_stars))
-#   lmfit <- lm(number_stars ~ . , data = foldtrain)
-#   observed <- c(observed, foldtest$number_stars)
-#   k <- match("number_stars", names(foldtest))
-#   predicted <- c(predicted, predict(lmfit, newdata=foldtest[-k]))
-# }
-# 
-# lmRes <- c()
-# 
-# resultsLM <- as.data.frame(cbind(observed,predicted))
-# names(resultsLM) <- c("observed", "predicted")
-# resultsLM$Difference <- resultsLM$observed - resultsLM$predicted
-# lmRes$summary <- summary(resultsLM$Difference)
-# lmRes$RMSError <- sqrt(mean((resultsLM$observed - resultsLM$predicted)^2))
-# lmRes$ExactMatch <- nrow(subset(resultsLM, resultsLM$observed==resultsLM$predicted))*100/nrow(resultsLM)
-# 
-# 
-# 
+# Linear model
+ 
+lmtraining <- training
+lmtraining$number_stars <- as.integer(as.character(training$number_stars))
+ 
+lmfit <- lm(number_stars ~ . , data = lmtraining)
+ 
+ 
+predicted <- predict(lmfit, newdata=training[-c(number_stars_index)])
+ 
+lmRes <- c()
+ 
+lmRes$Predictions <- as.data.frame(cbind(lmtraining$number_stars,predicted))
+names(lmRes$Predictions) <- c("observed", "predicted")
+lmRes$Predictions$observed <- as.integer(lmRes$Predictions$observed)
+lmRes$Predictions$predicted <- as.integer(lmRes$Predictions$predicted)
+lmRes$Predictions$Difference <- lmRes$Predictions$observed - lmRes$Predictions$predicted
+lmRes$summary <- summary(lmRes$Predictions$Difference)
+lmRes$RMSError <- sqrt(mean((lmRes$Predictions$Difference)^2))
+lmRes$ExactMatch <- nrow(subset(lmRes$Predictions, lmRes$Predictions$observed==lmRes$Predictions$predicted))*100/nrow(lmRes$Predictions)
+
+lmpath <- paste(PATH, "lmtraining.rda", sep="/")
+save(lmRes, lmfit, file = lmpath)
