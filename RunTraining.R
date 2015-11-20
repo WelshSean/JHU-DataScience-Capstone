@@ -5,6 +5,8 @@ library(rpart)
 library(rpart.plot)
 library(caret)
 library(kernlab)
+library(e1071)
+library(partykit)
 
 # Setup
 set.seed(1974)
@@ -12,16 +14,22 @@ setwd("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone")
 
 
 # Load Training Data
-PATH="/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/1pct_samples"
-#PATH="/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset"
+#PATH="/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/1pct_samples"
+PATH="/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset"
 load(paste(PATH, "yelptrain.rda", sep="/"))
+ctreepath <- paste(PATH, "ctreetraining.rda", sep="/")
 rpartpath <- paste(PATH, "rparttraining.rda", sep="/")
+rpart2path <- paste(PATH, "rpart2training.rda", sep="/")
 SVMpath <- paste(PATH, "SVMtraining.rda", sep="/")
 trainpath <- paste(PATH, "trainingdata.rda", sep="/")
 lmpath <- paste(PATH, "lmtraining.rda", sep="/")
 NBpath <- paste(PATH, "NaiveBayestraining.rda", sep="/")
 
+# includelist <- read.table("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/words.txt.tagged.processed", stringsAsFactors = FALSE)
+# includelist <- as.list(includelist[[1]])
+# includelist <- c(includelist, "business_id", "number_stars")
 
+includelist <- c("amazing", "awesome", "bad", "best", "better", "bland", "delicious", "dirty", "disappointed", "disappointing", "dont", "dry","excellent","favorite", "friendly", "great", "horrible" , "mediocre", "overpriced", "perfect", "poor", "rude","sorry", "terrible", "wonderful", "number_stars", "business_id")
 
 if (file.exists(trainpath)){
   print("Loading Training data from file") 
@@ -33,8 +41,9 @@ if (file.exists(trainpath)){
   save(trainingData, file=trainpath)
 }
 
-training <- trainingData[[1]] 
+training <- trainingData[[1]]
 rm(trainingData)
+training <- training[match(includelist, names(training), nomatch=0)]
 number_stars_index <- match("number_stars", names(training))
 business_id_index <- match("business_id", names(training))
 
@@ -62,6 +71,8 @@ if (!file.exists(rpartpath))
   rpartRes$Times$End=date()
   
   save(rpartRes, rpartfit, file = rpartpath)
+} else {
+  load(rpartpath)
 }
 
 # Support Vector Machine
@@ -130,7 +141,7 @@ if (!file.exists(NBpath))
   
   
   predicted <- predict(NBfit, newdata=training[-number_stars_index], type="class")
-  
+  libra
   NBRes <- c()
   
   NBRes$Predictions <- as.data.frame(cbind(training$number_stars,predicted))
@@ -143,4 +154,54 @@ if (!file.exists(NBpath))
   NBRes$Times$End=date()
   
   save(NBRes, NBfit, file = NBpath)
+}
+
+
+## Prune rpart model
+
+# if (exists("rpartRes") && !file.exists(rpart2path))
+# {
+#   optimalcp <- rpartfit$cptable[which.min(rpartfit$cptable[,"xerror"]),"CP"]
+#   rpart2fit <- prune(rpartfit, cp=optimalcp )
+#   
+#   predicted <- predict(rpart2fit, newdata=training[-number_stars_index], type="class")
+#   
+#   rpart2Res <- c()
+#   
+#   rpart2Res$Predictions <- as.data.frame(cbind(training$number_stars,predicted))
+#   names(rpart2Res$Predictions) <- c("observed", "predicted")
+#   rpart2Res$Predictions$Difference <- rpart2Res$Predictions$observed - rpart2Res$Predictions$predicted
+#   rpart2Res$summary <- summary(rpart2Res$Predictions$Difference)
+#   rpart2Res$RMSError <- sqrt(mean((rpart2Res$Predictions$Difference)^2))
+#   rpart2Res$ExactMatch <- nrow(subset(rpart2Res$Predictions, rpart2Res$Predictions$observed==rpart2Res$Predictions$predicted))*100/nrow(rpart2Res$Predictions)
+# 
+#   save(rpart2Res, rpart2fit, file = rpart2path)
+#   
+#   }
+
+## Ctree
+
+if (!file.exists(ctreepath))
+{  
+  print("ctree")
+  start=date()
+  training <-   data.frame(lapply(training, factor))
+  
+  ctreefit <- ctree(number_stars ~ . -business_id, data=training)
+  
+  
+  predicted <- predict(ctreefit, newdata=training[-number_stars_index])
+  
+  ctreeRes <- c()
+  
+  ctreeRes$Predictions <- as.data.frame(cbind(training$number_stars,predicted))
+  names(ctreeRes$Predictions) <- c("observed", "predicted")
+  ctreeRes$Predictions$Difference <- ctreeRes$Predictions$observed - ctreeRes$Predictions$predicted
+  ctreeRes$summary <- summary(ctreeRes$Predictions$Difference)
+  ctreeRes$RMSError <- sqrt(mean((ctreeRes$Predictions$Difference)^2))
+  ctreeRes$ExactMatch <- nrow(subset(ctreeRes$Predictions, ctreeRes$Predictions$observed==ctreeRes$Predictions$predicted))*100/nrow(ctreeRes$Predictions)
+  ctreeRes$Times$Start=start
+  ctreeRes$Times$End=date()
+  
+  save(ctreeRes, ctreefit, file = ctreepath)
 }

@@ -38,5 +38,15 @@ retlist <- list()
 retlist[[1]] <- tdmDF
 retlist[[2]] <- tdm
 return(retlist)
+#return(tdmDF)
 
+}
+
+numbinline <- function(line, checkinline)
+{
+  
+  gr <- function(regexp) {grep(regexp, line)}
+  
+  matches <-lapply(checkinline, gr)
+  return(length(unlist(matches)))
 }
