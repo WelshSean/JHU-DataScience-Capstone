@@ -8,6 +8,7 @@ library(caret)
 library(kernlab)
 library(e1071)
 library(partykit)
+library(caret)
 
 # Setup
 set.seed(1974)
@@ -17,6 +18,7 @@ setwd("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone")
 # Load Training Data
 #PATH="/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/1pct_samples"
 PATH="/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset"
+
 load(paste(PATH, "yelptrain.rda", sep="/"))
 trainpath <- paste(PATH, "trainingdata.rda", sep="/")
 ctreepath <- paste(PATH, "ctreetraining.rda", sep="/")
@@ -28,6 +30,8 @@ lmpath <- paste(PATH, "lmtraining.rda", sep="/")
 NBpath <- paste(PATH, "NaiveBayestraining.rda", sep="/")
 lm2path <- paste(PATH, "lm2training.rda", sep="/")
 RF2path <- paste(PATH, "RF2training.rda", sep="/")
+rpart2path <- paste(PATH, "rpart2training.rda", sep="/")
+ctree2path <- paste(PATH, "ctree2training.rda", sep="/")
 
 if (file.exists(trainpath)){
   print("Loading Training data from file") 
@@ -50,7 +54,9 @@ if (!file.exists(rpartpath))
   print("rpart")
   start=date()
   
-  rpartfit <- rpart(number_stars ~ . -business_id, data=trainingData, method="class")
+#  rpartfit <- rpart(number_stars ~ . -business_id, data=trainingData, method="class")
+  
+  rpartfit <- train(number_stars ~ . -business_id, data=trainingData, method="rpart", tuneLength=9)
   
   
   predicted <- predict(rpartfit, newdata=trainingData[-number_stars_index], type="class")
@@ -139,14 +145,14 @@ if (!file.exists(ctreepath))
   start=date()
   #training <-   data.frame(lapply(trainingData, factor))
   
-  ctreefit <- ctree(number_stars ~ pos_com+neg_com+review_length , data=training)
+  ctreefit <- ctree(number_stars ~ pos_com+neg_com+review_length , data=trainingData)
   
   
-  predicted <- predict(ctreefit, newdata=training[-number_stars_index])
+  predicted <- predict(ctreefit, newdata=trainingData[-number_stars_index])
   
   ctreeRes <- c()
   
-  ctreeRes$Predictions <- as.data.frame(cbind(training$number_stars,predicted))
+  ctreeRes$Predictions <- as.data.frame(cbind(trainingData$number_stars,predicted))
   names(ctreeRes$Predictions) <- c("observed", "predicted")
   ctreeRes$Predictions$Difference <- ctreeRes$Predictions$observed - ctreeRes$Predictions$predicted
   ctreeRes$summary <- summary(ctreeRes$Predictions$Difference)
@@ -217,7 +223,7 @@ if (!file.exists(lm2path))
   lm2training <- trainingData
   lm2training$number_stars <- as.integer(as.character(lm2training$number_stars))
   
-  lm2fit <- lm(number_stars ~ . -business_id, data = lm2training)
+  lm2fit <- lm(number_stars ~ pos_com+neg_com, data = lm2training)
   
   
   predicted <- predict(lm2fit, newdata=lm2training[-c(number_stars_index)])
@@ -236,6 +242,8 @@ if (!file.exists(lm2path))
   lm2Res$Times$End=date()
   
   save(lm2Res, lm2fit, file = lm2path)
+} else {
+  load(lm2path)
 }
 
 # Random Forest ntree =1000
@@ -245,8 +253,12 @@ if (!file.exists(RF2path))
   print("Random Forest 2")
   start=date()
   
-  RF2fit <- randomForest(number_stars ~ . -business_id, data=trainingData, ntree=1000)
+  # SPlitting as getting Fortran longvector errors for larger ntree
   
+  RF2fit1 <- randomForest(number_stars ~ . -business_id, data=trainingData[1:470780,], ntree=1000)
+  print ("First tree done")
+  RF2fit2 <- randomForest(number_stars ~ . -business_id, data=trainingData[470781:941560,], ntree=1000)
+  RF2fit <- combine(RF2fit1, RF2fit2)
   
   predicted <- predict(RF2fit, newdata=trainingData[-number_stars_index], type="class")
   
@@ -263,5 +275,63 @@ if (!file.exists(RF2path))
   
   save(RF2Res, RF2fit, file = RF2path)
 } else {
-  load(RFpath) 
+  load(RF2path) 
 }
+
+# rpart with only positive abd nagative comments used
+
+if (!file.exists(rpart2path))
+{  
+  print("rpart2")
+  start=date()
+  
+  rpart2fit <- rpart(number_stars ~ pos_com+neg_com, data=trainingData, method="class")
+  
+  
+  predicted <- predict(rpartfit, newdata=trainingData[-number_stars_index], type="class")
+  
+  rpart2Res <- c()
+  
+  rpart2Res$Predictions <- as.data.frame(cbind(trainingData$number_stars,predicted))
+  names(rpart2Res$Predictions) <- c("observed", "predicted")
+  rpart2Res$Predictions$Difference <- rpart2Res$Predictions$observed - rpart2Res$Predictions$predicted
+  rpart2Res$summary <- summary(rpart2Res$Predictions$Difference)
+  rpart2Res$RMSError <- sqrt(mean((rpart2Res$Predictions$Difference)^2))
+  rpart2Res$ExactMatch <- nrow(subset(rpart2Res$Predictions, rpart2Res$Predictions$observed==rpart2Res$Predictions$predicted))*100/nrow(rpartRes$Predictions)
+  rpart2Res$Times$Start=start
+  rpart2Res$Times$End=date()
+  
+  save(rpart2Res, rpart2fit, file = rpart2path)
+} else {
+  load(rpart2path)
+}
+
+## Ctree2
+
+if (!file.exists(ctreepath))
+{  
+  print("ctree2")
+  start=date()
+  #training <-   data.frame(lapply(trainingData, factor))
+  
+  ctree2fit <- ctree(number_stars ~ pos_com+neg_com , data=trainingData)
+  
+  
+  predicted <- predict(ctree2fit, newdata=trainingData[-number_stars_index])
+  
+  ctree2Res <- c()
+  
+  ctree2Res$Predictions <- as.data.frame(cbind(trainingData$number_stars,predicted))
+  names(ctree2Res$Predictions) <- c("observed", "predicted")
+  ctree2Res$Predictions$Difference <- ctree2Res$Predictions$observed - ctree2Res$Predictions$predicted
+  ctree2Res$summary <- summary(ctree2Res$Predictions$Difference)
+  ctree2Res$RMSError <- sqrt(mean((ctree2Res$Predictions$Difference)^2))
+  ctree2Res$ExactMatch <- nrow(subset(ctree2Res$Predictions, ctree2Res$Predictions$observed==ctree2Res$Predictions$predicted))*100/nrow(ctree2Res$Predictions)
+  ctree2Res$Times$Start=start
+  ctree2Res$Times$End=date()
+  
+  save(ctree2Res, ctree2fit, file = ctree2path)
+}
+
+
+
