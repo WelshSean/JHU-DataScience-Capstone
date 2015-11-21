@@ -6,7 +6,10 @@ output: pdf_document
 ---
 
 ```{R cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE,results="hide"}
+# Hide all nasty background loading and libraries here
 load("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/yelpdata.rda")
+library(ggplot2)
+library(mosaic)
 ```
 
 # Introduction
