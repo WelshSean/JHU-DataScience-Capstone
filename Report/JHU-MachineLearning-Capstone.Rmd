@@ -1,0 +1,46 @@
+---
+title: "Investigation Into Predicting Yelp Ratings Based on Review Text"
+author: "Sean Clarke"
+date: "21 November 2015"
+output: pdf_document
+---
+
+```{R cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE,results="hide"}
+load("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/yelpdata.rda")
+```
+
+# Introduction
+
+This report describes an investigation into the following question.
+
+*Is it possible to predict the number of stars given to a business based on analysis of the text in the review? Is the accuracy of the model affected by demographics, for example does it work less effectively in Germany. Given the fact that Spanish is increasingly becoming the language of the US, is that important in answering this question?*
+
+This question would definitely be of interest to yelp.com and their customers as it might provide a basis of judging reviewer sentiment in situations where they have comments but no ratings. It might also form the basis of generating estimated ratings from Social Media posts regarding businesses.
+
+
+# Methods and Data
+
+## Exploratory Analysis
+
+## Preparation
+
+All code with a ReadMe to describe processing steps is on [github](https://github.com/WelshSean/JHU-DataScience-Capstone) in order to facilitate reproducability.
+
+The streaming JSON files as published by Yelp were downloaded and an [ER Diagram](https://github.com/WelshSean/JHU-DataScience-Capstone/blob/master/ER-Diagram.pdf) was built to relate all the quantities and the relevant keys. [R code](https://github.com/WelshSean/JHU-DataScience-Capstone/blob/master/RawDataAnalysis.R) was written to pull the relevant information from the files. Some preprocessing was done including limiting the analysis to Restaurants and then the data was split into training, validation and test sets in a 60:20:20 ratio. As this was a lengthy process, the data was saved to three RDA files.
+
+The tm Text mining package was then used to extract the Corpus from the text. We then proceeded to apply standard transforms to the corpora in order to facilitate analysis. Punctation, numbers and whitespace was removed, all text was converted to lower case and standard English "stop-words" were removed using the facility provided by the tm framework.
+
+The Coprora were then transformed into a TermDocument matrix in order to give a "bag of words" representation and only words that occurred in more than 1% of reviews were retained. Initially the approach was to attempt to model directly using the bag of words but it became readily apparent that attempting to model a large number of observations with such a large number of features was computaionally prohibitive with the available resources.
+
+Faced by this problem we switched tack and attempted a basic sentiment analysis of the text following [Breen et al](https://github.com/jeffreybreen/twitter-sentiment-analysis-tutorial-201107) using lists of known positive and negative words originally provided by [Hiu and Lu]( http://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html). Following this approach, we simplified the problem to one of modelling the dependency of the star rating on three features. These were number of positive words, number of negative words, and review length in words. 
+
+
+
+#Results 
+
+Describe what you found through your analysis of the data.
+
+#Discussion 
+
+
+Explain how you interpret the results of your analysis and what the implications are for your question/problem.
