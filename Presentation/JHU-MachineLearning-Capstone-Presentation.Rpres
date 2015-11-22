@@ -1,6 +1,6 @@
 JHU-MachineLearning-Capstone-Presentation
 ========================================================
-author: Sean Clarke 
+author: Sean Clarke - @WelshSeanSter
 date: 
 
 Study Motivation
