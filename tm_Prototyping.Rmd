@@ -13,8 +13,8 @@ Qudos to this [Stack Exchange article](http://stackoverflow.com/questions/155061
 
 ```{r message=FALSE, warning=FALSE}
 library(jsonlite)
-setwd("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset")
-#setwd("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/1pct_samples")      
+#setwd("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset")
+setwd("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/1pct_samples")      
       
 set.seed(1974)
 review <- stream_in(file('yelp_academic_dataset_review.json'))

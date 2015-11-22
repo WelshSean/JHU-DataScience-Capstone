@@ -1,7 +1,5 @@
 ---
 title: "Investigation Into Predicting Yelp Ratings Based on Review Text"
-author: "Sean Clarke"
-date: "21 November 2015"
 output: pdf_document
 ---
 
@@ -51,26 +49,26 @@ yelptest <- yelpreviews
 
 This report describes an investigation into the following question.
 
-*Is it possible to predict the number of stars given to a business based on analysis of the text in the review? Is the accuracy of the model affected by demographics, for example does it work less effectively in Germany. Given the fact that Spanish is increasingly becoming the language of the US, is that important in answering this question?*
+*Is it possible to predict the number of stars given to a business based on analysis of the text in a Yelp review? Is the accuracy of the model affected by demographics, for example does it work less effectively in Germany because of the language difference. Given the fact that Spanish is increasingly becoming the language of the US, is that important in answering this question?*
 
-This question would definitely be of interest to yelp.com and their customers as it might provide a basis of judging reviewer sentiment in situations where they have comments but no ratings. It might also form the basis of generating estimated ratings from Social Media posts regarding businesses.
+This question would definitely be of interest to yelp.com and their customers as it might provide a basis for judging reviewer sentiment in situations where they have comments but no ratings. It might also form the basis of a means of generating estimated ratings from Social Media posts regarding businesses.
 
 
 # Methods and Data
 
 ## Exploratory Analysis
 
-Initially we investigate the distribution of categories to see if one dominates in order to see if there was potential to limit the scope of the serach to make this huge dataset more manageable. Clearly restaurants dominate all other categories so we limited the scope of this invetigation to restaurants.
+Initially we investigate the distribution of business categories to see if one dominates in order to see if there was potential to limit the scope of the search to make this huge dataset more manageable. As can be seen from the results below, restaurants dominate all other categories so we limited the scope of this investigation to restaurants.
 
-```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
+```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE,fig.width=4,fig.height=4}
 z <- data.frame(table(unlist(head(yelpdata$categories,n=1000000))))    # Count categories
 topCats <- head(z[order(z$Freq, decreasing=T), ], n = 10)               # List cats in order
 
 ggplot(data=topCats, aes(x=Var1, y=Freq)) +
-  geom_bar(stat="identity")  + xlab("Category") + ylab("Number of Occurences") + theme(axis.text.x=element_text(angle=90, size=10, vjust=0.5))
+  geom_bar(stat="identity")  + xlab("Category") + ylab("Number of Occurences") + theme(axis.text.x=element_text(angle=90, size=8, vjust=0.5), axis.title.y=element_text(size=10))
 ```
 
-We also wanted to understand the geographical spread of the establishments in question so we extracted this from the data. This information was gleaned from the state variable in the data which we discovered wasnt entirely regular or always mapping to official state designations so we manually built a [lookup table](https://github.com/WelshSean/JHU-DataScience-Capstone/blob/master/ExploratoryAnalysis.Rmd) to clean this and then evaluated it.
+We also wanted to understand the geographical spread of the establishments in question, so we extracted this from the data. This information was gleaned from the state variable in the data which we discovered wasn't entirely regular or always mapping to official state designations so we manually built a [lookup table](https://github.com/WelshSean/JHU-DataScience-Capstone/blob/master/ExploratoryAnalysis.Rmd) to clean this and then evaluated it.
 
 ```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
 yelpdata <- mutate(yelpdata, country= derivedFactor(
@@ -89,9 +87,8 @@ tab <- yelpdata %>%
 kable(tab, digits=2)
 ```
 
-It's also informative to look at the distrinbution of the review scores.
 
-```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
+```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE,fig.width=4, fig.height=4}
 startab <- as.data.frame(xtabs(formula=~stars+country, data=yelpdata))
 tottab <- as.data.frame(xtabs(formula=~stars, data=yelpdata))
 tottab[1:5,"country"] <- "Total"
@@ -100,12 +97,16 @@ sp <- ggplot(startab, aes(x=stars, y=Freq)) + geom_bar(stat="identity") + facet_
 sp
 ```
 
-Finally once the conclusion was reached that modelling using the the whole bag of words was not realistic computationally the approach used for sentiment analysis was based on the thesis that higher ratings would tend to have more positive words in them overall and that lower review scores would tend to have more negative words. The boxplot below based on the trainin data allows to investigate this idea.
 
-```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
-a <- ggplot(trainingData, aes(y=pos_com, x=number_stars)) + geom_boxplot() + labs(x="Rating (out of 5 Stars)", y ="Number of positive words in review")
-b <- ggplot(trainingData, aes(y=neg_com, x=number_stars)) + geom_boxplot()  + labs(x="Rating (out of 5 Stars)", y ="Number of negative words in review")
-c <- ggplot(trainingData, aes(y=neg_com-pos_com, x=number_stars)) + geom_boxplot()  + labs(x="Rating (out of 5 Stars)", y ="Difference between number of +ve and -ve words in review")
+
+
+
+As discussed in more detail later in this report, the conclusion was reached that modelling using the whole bag of words was not realistic computationally. The alternative approach then employed was based on sentiment analysis. More specifically it was based on the thesis that higher ratings would tend to have more positive words in them overall and that lower review scores would tend to have more negative words. The boxplot below based on the training data allows the investigation of this idea.
+
+```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE, fig.width=6,fig.height=4}
+a <- ggplot(trainingData, aes(y=pos_com, x=number_stars)) + geom_boxplot() + labs(x="Rating(out of 5 Stars)", y ="Number of positive words in review")
+b <- ggplot(trainingData, aes(y=neg_com, x=number_stars)) + geom_boxplot()  + labs(x="Rating(out of 5 Stars)", y ="Number of negative words in review")
+c <- ggplot(trainingData, aes(y=neg_com-pos_com, x=number_stars)) + geom_boxplot()  + labs(x="Rating(out of 5 Stars)", y ="n(-ve words) - n(+ve words)")
 grid.arrange(a,b,c, ncol=3)
 ```
 
@@ -113,7 +114,7 @@ On the whole, this plot seems to at least partially support this thesis. Higher 
 
 ## Preparation
 
-All code with a ReadMe to describe processing steps is on [github](https://github.com/WelshSean/JHU-DataScience-Capstone) in order to facilitate reproducability.
+All code, along with a ReadMe to describe processing steps is on [github](https://github.com/WelshSean/JHU-DataScience-Capstone) in order to facilitate reproducability.
 
 The streaming JSON files as published by Yelp were downloaded and an [ER Diagram](https://github.com/WelshSean/JHU-DataScience-Capstone/blob/master/ER-Diagram.pdf) was built to relate all the quantities and the relevant keys. [R code](https://github.com/WelshSean/JHU-DataScience-Capstone/blob/master/RawDataAnalysis.R) was written to pull the relevant information from the files. Some preprocessing was done including limiting the analysis to Restaurants and then the data was split into training, validation and test sets in a 60:20:20 ratio. As this was a lengthy process, the data was saved to three RDA files. 
 
@@ -123,15 +124,15 @@ The summarised data then contains the following categories
 names(yelpdata)
 ```
 
-The tm Text mining package was then used to extract the Corpus from the text. We then proceeded to apply standard transforms to the corpora in order to facilitate analysis. Punctation, numbers and whitespace was removed, all text was converted to lower case and standard English "stop-words" were removed using the facility provided by the tm framework.
+The tm Text mining package was then used to extract the Corpus from the text. We then proceeded to apply standard transforms to the corpora in order to facilitate analysis. Punctation, numbers and whitespace were removed, all text was converted to lower case and standard English "stop-words" were removed using the facility provided by the tm framework.
 
-The Coprora were then transformed into a TermDocument matrix in order to give a "bag of words" representation and only words that occurred in more than 1% of reviews were retained. Initially the approach was to attempt to model directly using the bag of words but it became readily apparent that attempting to model a large number of observations with such a large number of features was computaionally prohibitive with the available resources.
+The Corpora were then transformed into a Term Document Matrix in order to give a "bag of words" representation and only words that occurred in more than 1% of reviews were retained. Initially the approach was to attempt to model directly using the bag of words but it became readily apparent that attempting to model a large number of observations with such a large number of features was computationally prohibitive with the available resources.
 
 Faced by this problem we switched tack and attempted a basic sentiment analysis of the text following [Breen et al](https://github.com/jeffreybreen/twitter-sentiment-analysis-tutorial-201107) using lists of known positive and negative words originally provided by [Hiu and Lu]( http://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html). Following this approach, we simplified the problem to one of modelling the dependency of the star rating on three features. These were number of positive words, number of negative words, and review length in words. 
 
 ## Model Development
 
-During the training phase, multiple models were evaluated including rpart, ctree (this was used because the rpart tree that was seen, would never predict 2 or 3 star reviews), Random Forest, Naive Bayes and a Linear Model. The efficacy of these models was evaluated by comparison the Root Mean Square(RMS) error and percentage of exact matches "in Sample".
+During the training phase, multiple models were evaluated including rpart, ctree (this was used because the rpart tree that was seen, would never predict 2 or 3 star reviews), Random Forest, Naive Bayes and a Linear Model. The efficacy of these models was evaluated by investigation of the Root Mean Square(RMS) error and percentage of exact matches "in Sample".
 
 ```{r echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
 Results <- c()
@@ -146,7 +147,7 @@ to_plot <- to_plot[order(-PctMatches, RMSValues),]
 kable(to_plot, digits=2)
 ```
 
-Based on these results, the ctree, Random Forest and Naive Bayes models were used to predict the star ratings for the validation data set to get an estimate of the out of sample errors in an attempt to preclude potential overfitting.
+Based on these results, the ctree, Random Forest and Naive Bayes models were selected to be used to predict the star ratings for the validation data set in order to get an estimate of the out of sample errors in an attempt to preclude potential overfitting.
 
 ```{r echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
 VResults <- c()
@@ -167,14 +168,14 @@ Based on these results the ctree based model was chosen to be the one that we wo
 
 ## Model Accuracy
 
-The results below, show some statistics used to judge the accuracy of the model in predicting the outcomes of the test data set.
+The figure below, shows the Confusion Matrix which was used to judge the accuracy of the model in predicting the outcomes of the test data set.
 
 ```{r echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
 CM <- confusionMatrix(ctreeTRes$Predictions$predicted, ctreeTRes$Predictions$observed)
 kable(CM$table, row.names=TRUE)
 ```
 
-This shows that the model works fairly well for predicting the extremities of the review scores (1 and 5) but less effective for for entries where the observed scores were 2,3 and 4 stars. One might imagine that this could be the case, if the reviewer is giving mixed reviews, maybe because some things were good and some things were not then they might use a mixture of sentiments in their review whereas a 1 star review is likely to be predominantly negative and a 5 star review is more likely to be predominantly positive. The sensitivity results back this up with 1 star = 0.57, 2 stars = 0.04, 3 stars = 0.02, 4 stars = 0.27 and 5 stars = 0.78. This also demonstrates the effect of the dataset being skewed with many more five star reviews than any other kind.
+As can be observed, the model works fairly well for predicting the extremities of the review scores (1 and 5) but is less effective for entries where the observed scores were 2,3 and 4 stars. One could conceive that this could be the case, if the reviewer is giving mixed reviews, maybe because some things were good and some things were not. They then might use a mixture of sentiments in their review whereas a 1 star review is likely to be predominantly negative and a 5 star review is more likely to be predominantly positive. The sensitivity results back this up with 1 star = 0.57, 2 stars = 0.04, 3 stars = 0.02, 4 stars = 0.27 and 5 stars = 0.78. This also demonstrates the effect of the dataset being skewed with many more five star reviews than any other kind.
 
 ## Geographic Dependency
 
@@ -208,15 +209,15 @@ names(tab) <- c("%Predicted", "RMS Error")
 kable(tab)
 ```
 
-As can be seen, the only strongly evident dependency on the regional nature of the data is for the German data. The model clearly doesnt work for German data.
+As can be seen, the only strongly evident dependency on the regional nature of the data is for the German data. The rate of successful prediction and the RMS errors are much worse in Germany than other areas - this clearly shows that the fact that our model used English words to identify sentiment prevents it being useful in Germany.
 
 #Discussion 
 
 
 Based on the results for the accuracy of the predictions from the model detailed in the previous section the answer to the first part of the question that I set myself is yes we can to some extent predict the star ratings from the Review text as I see a success rating of approximately 40% which is far in excess of the 20% success rate one would expect from randomly selecting a star rating.
 
-We also see that the selected model is much more successful for very negative and very positive reviews. This is something that was seen across all the algorithms that we applied to the sentiment analysis. The thesis that this model was based upon is clearly at least partially flawed the box plots earlier in the document show that we see considerable outliers where 1 star ratings have many positive words or 5 star ratings have many negative words. A number of facotrs could be at play here. Firstly we consider each word in isolation the context of these words could change totally when considered with preceeding and following words, for example good -> not good. The model could potentially be improved by the inclusion of NGrams in some way. There are also potentially less important effects where different parts of the community use the word to mean something other than its dictionary meaning, for example, the use of the word bad to mean good amongst youths. There is clearly more work to be done in extending the algorithm but 40% success is not to be sniffed at.
+We also see that the selected model is much more successful for very negative and very positive reviews. This is something that was seen across all the algorithms that we applied to the sentiment analysis. The thesis that this model was based upon is clearly at least partially flawed. The box plots earlier in the document show that we see considerable outliers where 1 star ratings have many positive words or 5 star ratings have many negative words. A number of factors could be at play here. Firstly, we consider each word in isolation - the context of these words could change totally when considered with preceeding and following words, for example good -> not good. The model could potentially be improved by the inclusion of NGrams in some way. There are also potentially less important effects where different parts of the community might use the word to mean something other than its dictionary meaning, for example, the use of the word bad to mean good amongst youths. There is clearly more work to be done in extending the algorithm but 40% success is not to be sniffed at.
 
-The second question around if lamguage is important is clearly supported. Now with the model that I ended up using based on positive word lists this is not at all surprising or indeed it is expected - ee would only expect to get an indication of sentiment where the reviewer happened to use English (maybe as a foreign visitor) or that the words happen to be the same between languages or have been adopted into one language from the other. What would have been much more interesting to look at was to see if this effect had also been seen modelling the bag of words. Obviously as I was not able to evaluate that model due to comutational constraints, I am not able to answer that question.
+The second question around if language is important is clearly supported. Now with the model that I used based on positive word lists this is not at all surprising, indeed it is expected. We would only expect to identify an indication of sentiment where the reviewer happened to use English (maybe as a foreign visitor or where the words happen to be the same between languages or have been adopted into one language from the other). What would have been much more interesting to look at was to see if this effect had also been seen modelling the bag of words. Obviously as I was not able to evaluate that model due to computational constraints, I am not able to answer that question.
 
 To summarise, this work is a good start but there a number of other avenues that it would be helpful to pursue in order to further develop this area. 
