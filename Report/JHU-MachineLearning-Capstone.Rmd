@@ -14,14 +14,35 @@ library(mosaic)
 library(dplyr)
 library(knitr)
 library(gridExtra)
+library(caret)
 
-# Load whole dataset
+### Load whole dataset
 load("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/yelpdata.rda")
-#Load and process training data
+
+### Load and process training data
+
 PATH="/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset"
 trainpath <- paste(PATH, "trainingdata.rda", sep="/")
 load(trainpath)
 trainingData <- trainingData[c("business_id", "number_stars", "pos_com", "neg_com", "review_length")]
+load(paste(PATH,"rparttraining.rda", sep="/"))
+load(paste(PATH,"lmtraining.rda", sep="/"))
+load(paste(PATH,"RFtraining.rda", sep="/"))
+load(paste(PATH,"ctreetraining.rda", sep="/"))
+load(paste(PATH,"NaiveBayestraining.rda", sep="/"))
+
+### Load validation results
+
+load(paste(PATH,"RFval.rda", sep="/"))
+load(paste(PATH,"ctreeval.rda", sep="/"))
+load(paste(PATH,"NaiveBayesval.rda", sep="/"))
+
+# Load test Results
+
+load(paste(PATH,"ctreetest.rda", sep="/"))
+load(paste(PATH,"yelptest.rda", sep="/"))
+yelptest <- yelpreviews
+
 ```
 
 # Introduction
@@ -86,6 +107,7 @@ c <- ggplot(trainingData, aes(y=neg_com-pos_com, x=number_stars)) + geom_boxplot
 grid.arrange(a,b,c, ncol=3)
 ```
 
+On the whole, this plot seems to at least partially support this thesis. Higher ratings tend to get more positive words and lower scores tend to get more negative reviews. However there do appear to be significant numbers of outliers that do not follow this trend. Its also not clear if the trend is pronounced enough to make it possible to distinguish between for example four and five star reviews.
 
 ## Preparation
 
@@ -95,7 +117,7 @@ The streaming JSON files as published by Yelp were downloaded and an [ER Diagram
 
 The summarised data then contains the following categories
 
-```{r}
+```{r echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
 names(yelpdata)
 ```
 
@@ -105,11 +127,86 @@ The Coprora were then transformed into a TermDocument matrix in order to give a 
 
 Faced by this problem we switched tack and attempted a basic sentiment analysis of the text following [Breen et al](https://github.com/jeffreybreen/twitter-sentiment-analysis-tutorial-201107) using lists of known positive and negative words originally provided by [Hiu and Lu]( http://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html). Following this approach, we simplified the problem to one of modelling the dependency of the star rating on three features. These were number of positive words, number of negative words, and review length in words. 
 
+## Model Development
 
+During the training phase, multiple models were evaluated including rpart, ctree (this was used because the rpart tree that was seen, would never predict 2 or 3 star reviews), Random Forest, Naive Bayes and a Linear Model. The efficacy of these models was evaluated by comparison the Root Mean Square(RMS) error and percentage of exact matches "in Sample".
+
+```{r echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
+Results <- c()
+
+Results <- list(rpart=rpartRes, lm=lmRes, RF=RFRes, ctree=ctreeRes,NB=NBRes)
+
+RMSValues <- unlist(lapply(Results,function(x) x$RMSError ))
+PctMatches <- unlist(lapply(Results,function(x) x$ExactMatch ))
+
+to_plot <- cbind(as.data.frame(PctMatches), as.data.frame(RMSValues) )
+to_plot <- to_plot[order(-PctMatches, RMSValues),]
+kable(to_plot, digits=2)
+```
+
+Based on these results, the ctree, Random Forest and Naive Bayes models were used to predict the star ratings for the validation data set to get an estimate of the out of sample errors in an attempt to preclude potential overfitting.
+
+```{r echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
+VResults <- c()
+
+VResults <- list( RF=RFVRes, ctree=ctreeVRes,NB=NBVRes)
+
+VRMSValues <- unlist(lapply(VResults,function(x) x$RMSError ))
+VPctMatches <- unlist(lapply(VResults,function(x) x$ExactMatch ))
+
+Vto_plot <- cbind(as.data.frame(VPctMatches), as.data.frame(VRMSValues) )
+Vto_plot <- Vto_plot[order(-VPctMatches, VRMSValues),]
+kable(Vto_plot, digits=2)
+```
+
+Based on these results the ctree based model was chosen to be the one that we would use to predict from the test data.
 
 #Results 
 
-Describe what you found through your analysis of the data.
+## Model Accuracy
+
+The results below, show some statistics used to judge the accuracy of the model in predicting the outcomes of the test data set.
+
+```{r echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
+CM <- confusionMatrix(ctreeTRes$Predictions$predicted, ctreeTRes$Predictions$observed)
+kable(CM$table, row.names=TRUE)
+```
+
+This shows that the model works fairly well for predicting the extremities of the review scores (1 and 5) but less effective for for entries where the observed scores were 2,3 and 4 stars. One might imagine that this could be the case, if the reviewer is giving mixed reviews, maybe because some things were good and some things were not then they might use a mixture of sentiments in their review whereas a 1 star review is likely to be predominantly negative and a 5 star review is more likely to be predominantly positive. The sensitivity results back this up with 1 star = 0.57, 2 stars = 0.04, 3 stars = 0.02, 4 stars = 0.27 and 5 stars = 0.78. This also demonstrates the effect of the dataset being skewed with many more five star reviews than any other kind.
+
+## Geographic Dependency
+
+```{r}
+z <-merge(ctreeTout, yelptest)
+z$number_stars <- as.integer(as.character(z$number_stars))
+z$predicted <- as.integer(as.character(z$predicted))
+resNA <- z[z$country == "US",]
+resCA <- z[z$country == "CA",]
+resUK <- z[z$country == "UK",]
+resDE  <- z[z$country == "DE",]
+
+GeoRes_EM <- c()
+GeoRes_RMS <- c()
+
+NA_EM <- length(subset(resNA$predicted, resNA$number_stars==resNA$predicted))*100/nrow(resNA)
+CA_EM <- length(subset(resCA$predicted, resCA$number_stars==resCA$predicted))*100/nrow(resCA)
+UK_EM <- length(subset(resUK$predicted, resUK$number_stars==resUK$predicted))*100/nrow(resUK)
+DE_EM <- length(subset(resDE$predicted, resDE$number_stars==resDE$predicted))*100/nrow(resUK)
+
+GeoRes_EM <- list("NA"=NA_EM, "CA"=CA_EM, "UK"=UK_EM, "DE"= DE_EM)
+
+NA_RMS <- sqrt(mean((resNA$predicted - resNA$number_stars)^2))
+CA_RMS <- sqrt(mean((resCA$predicted - resCA$number_stars)^2))
+UK_RMS <- sqrt(mean((resUK$predicted - resUK$number_stars)^2))
+DE_RMS <- sqrt(mean((resDE$predicted - resDE$number_stars)^2))
+
+GeoRes_RMS <- list("NA"=NA_RMS, "CA"=CA_RMS,"UK"=UK_RMS, "DE"=DE_RMS)
+tab <- cbind(as.data.frame(unlist(GeoRes_EM)), as.data.frame(unlist(GeoRes_RMS)))
+names(tab) <- c("%Predicted", "RMS Error")
+kable(tab)
+```
+
+As can be seen, the only strongly evident dependency on the regional nature of the data is for the German data. The model clearly doesnt work for German data.
 
 #Discussion 
 

@@ -1,4 +1,4 @@
-####### Main script for running Validation analysis
+####### Main script for running Test analysis
 
 # Libraries
 library(rpart)
@@ -70,6 +70,7 @@ if (!file.exists(ctreeTpath))
   ctreeTRes <- c()
   
   ctreeTRes$Predictions <- as.data.frame(cbind(testData$number_stars,predicted))
+  ctreeTout <- as.data.frame(cbind(testData,predicted))
   names(ctreeTRes$Predictions) <- c("observed", "predicted")
   ctreeTRes$Predictions$Difference <- ctreeTRes$Predictions$observed - ctreeTRes$Predictions$predicted
   ctreeTRes$summary <- summary(ctreeTRes$Predictions$Difference)
@@ -78,7 +79,7 @@ if (!file.exists(ctreeTpath))
   ctreeTRes$Times$Start=start
   ctreeTRes$Times$End=date()
   
-  save(ctreeVRes, file = ctreeVpath)
+  save(ctreeTRes, ctreeTout, file = ctreeTpath)
 }
 
 
