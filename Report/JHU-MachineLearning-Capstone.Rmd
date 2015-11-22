@@ -176,7 +176,7 @@ This shows that the model works fairly well for predicting the extremities of th
 
 ## Geographic Dependency
 
-```{r}
+```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
 z <-merge(ctreeTout, yelptest)
 z$number_stars <- as.integer(as.character(z$number_stars))
 z$predicted <- as.integer(as.character(z$predicted))
@@ -211,4 +211,10 @@ As can be seen, the only strongly evident dependency on the regional nature of t
 #Discussion 
 
 
-Explain how you interpret the results of your analysis and what the implications are for your question/problem.
+Based on the results for the accuracy of the predictions from the model detailed in the previous section the answer to the first part of the question that I set myself is yes we can to some extent predict the star ratings from the Review text as I see a success rating of approximately 40% which is far in excess of the 20% success rate one would expect from randomly selecting a star rating.
+
+We also see that the selected model is much more successful for very negative and very positive reviews. This is something that was seen across all the algorithms that we applied to the sentiment analysis. The thesis that this model was based upon is clearly at least partially flawed the box plots earlier in the document show that we see considerable outliers where 1 star ratings have many positive words or 5 star ratings have many negative words. A number of facotrs could be at play here. Firstly we consider each word in isolation the context of these words could change totally when considered with preceeding and following words, for example good -> not good. The model could potentially be improved by the inclusion of NGrams in some way. There are also potentially less important effects where different parts of the community use the word to mean something other than its dictionary meaning, for example, the use of the word bad to mean good amongst youths. There is clearly more work to be done in extending the algorithm but 40% success is not to be sniffed at.
+
+The second question around if lamguage is important is clearly supported. Now with the model that I ended up using based on positive word lists this is not at all surprising or indeed it is expected - ee would only expect to get an indication of sentiment where the reviewer happened to use English (maybe as a foreign visitor) or that the words happen to be the same between languages or have been adopted into one language from the other. What would have been much more interesting to look at was to see if this effect had also been seen modelling the bag of words. Obviously as I was not able to evaluate that model due to comutational constraints, I am not able to answer that question.
+
+To summarise, this work is a good start but there a number of other avenues that it would be helpful to pursue in order to further develop this area.
