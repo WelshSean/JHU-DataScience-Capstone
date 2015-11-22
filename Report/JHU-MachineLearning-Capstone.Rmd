@@ -5,7 +5,7 @@ date: "21 November 2015"
 output: pdf_document
 ---
 
-```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE,results="hide"}
+```{r echo=FALSE,warning=FALSE,error=FALSE,message=FALSE,results="hide"}
 # Hide all nasty background loading and libraries here
 
 # Load libraries
@@ -15,7 +15,9 @@ library(dplyr)
 library(knitr)
 library(gridExtra)
 library(caret)
+```
 
+```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE,results="hide"}
 ### Load whole dataset
 load("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/yelpdata.rda")
 
@@ -102,7 +104,7 @@ Finally once the conclusion was reached that modelling using the the whole bag o
 
 ```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
 a <- ggplot(trainingData, aes(y=pos_com, x=number_stars)) + geom_boxplot() + labs(x="Rating (out of 5 Stars)", y ="Number of positive words in review")
-b <- ggplot(trainingData, aes(y=neg_com, x=number_stars)) + geom_boxplot()  + labs(x="Rating (out of 5 Stars)", y ="Number of positive words in review")
+b <- ggplot(trainingData, aes(y=neg_com, x=number_stars)) + geom_boxplot()  + labs(x="Rating (out of 5 Stars)", y ="Number of negative words in review")
 c <- ggplot(trainingData, aes(y=neg_com-pos_com, x=number_stars)) + geom_boxplot()  + labs(x="Rating (out of 5 Stars)", y ="Difference between number of +ve and -ve words in review")
 grid.arrange(a,b,c, ncol=3)
 ```
@@ -176,7 +178,7 @@ This shows that the model works fairly well for predicting the extremities of th
 
 ## Geographic Dependency
 
-```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
+```{r echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
 z <-merge(ctreeTout, yelptest)
 z$number_stars <- as.integer(as.character(z$number_stars))
 z$predicted <- as.integer(as.character(z$predicted))
@@ -217,4 +219,4 @@ We also see that the selected model is much more successful for very negative an
 
 The second question around if lamguage is important is clearly supported. Now with the model that I ended up using based on positive word lists this is not at all surprising or indeed it is expected - ee would only expect to get an indication of sentiment where the reviewer happened to use English (maybe as a foreign visitor) or that the words happen to be the same between languages or have been adopted into one language from the other. What would have been much more interesting to look at was to see if this effect had also been seen modelling the bag of words. Obviously as I was not able to evaluate that model due to comutational constraints, I am not able to answer that question.
 
-To summarise, this work is a good start but there a number of other avenues that it would be helpful to pursue in order to further develop this area.
+To summarise, this work is a good start but there a number of other avenues that it would be helpful to pursue in order to further develop this area. 
