@@ -7,11 +7,21 @@ output: pdf_document
 
 ```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE,results="hide"}
 # Hide all nasty background loading and libraries here
-load("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/yelpdata.rda")
+
+# Load libraries
 library(ggplot2)
 library(mosaic)
 library(dplyr)
 library(knitr)
+library(gridExtra)
+
+# Load whole dataset
+load("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/yelpdata.rda")
+#Load and process training data
+PATH="/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset"
+trainpath <- paste(PATH, "trainingdata.rda", sep="/")
+load(trainpath)
+trainingData <- trainingData[c("business_id", "number_stars", "pos_com", "neg_com", "review_length")]
 ```
 
 # Introduction
@@ -66,6 +76,16 @@ startab <- rbind(startab,tottab)
 sp <- ggplot(startab, aes(x=stars, y=Freq)) + geom_bar(stat="identity") + facet_grid(country ~ . , scales="free_y")
 sp
 ```
+
+Finally once the conclusion was reached that modelling using the the whole bag of words was not realistic computationally the approach used for sentiment analysis was based on the thesis that higher ratings would tend to have more positive words in them overall and that lower review scores would tend to have more negative words. The boxplot below based on the trainin data allows to investigate this idea.
+
+```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
+a <- ggplot(trainingData, aes(y=pos_com, x=number_stars)) + geom_boxplot() + labs(x="Rating (out of 5 Stars)", y ="Number of positive words in review")
+b <- ggplot(trainingData, aes(y=neg_com, x=number_stars)) + geom_boxplot()  + labs(x="Rating (out of 5 Stars)", y ="Number of positive words in review")
+c <- ggplot(trainingData, aes(y=neg_com-pos_com, x=number_stars)) + geom_boxplot()  + labs(x="Rating (out of 5 Stars)", y ="Difference between number of +ve and -ve words in review")
+grid.arrange(a,b,c, ncol=3)
+```
+
 
 ## Preparation
 
