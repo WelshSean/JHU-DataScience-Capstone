@@ -5,11 +5,13 @@ date: "21 November 2015"
 output: pdf_document
 ---
 
-```{R cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE,results="hide"}
+```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE,results="hide"}
 # Hide all nasty background loading and libraries here
 load("/Users/Sean/Coursera_DataScience/JHU-DataScience-Capstone/yelp_dataset_challenge_academic_dataset/yelpdata.rda")
 library(ggplot2)
 library(mosaic)
+library(dplyr)
+library(knitr)
 ```
 
 # Introduction
@@ -25,11 +27,57 @@ This question would definitely be of interest to yelp.com and their customers as
 
 ## Exploratory Analysis
 
+Initially we investigate the distribution of categories to see if one dominates in order to see if there was potential to limit the scope of the serach to make this huge dataset more manageable. Clearly restaurants dominate all other categories so we limited the scope of this invetigation to restaurants.
+
+```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
+z <- data.frame(table(unlist(head(yelpdata$categories,n=1000000))))    # Count categories
+topCats <- head(z[order(z$Freq, decreasing=T), ], n = 10)               # List cats in order
+
+ggplot(data=topCats, aes(x=Var1, y=Freq)) +
+  geom_bar(stat="identity")  + xlab("Category") + ylab("Number of Occurences") + theme(axis.text.x=element_text(angle=90, size=10, vjust=0.5))
+```
+
+We also wanted to understand the geographical spread of the establishments in question so we extracted this from the data. This information was gleaned from the state variable in the data which we discovered wasnt entirely regular or always mapping to official state designations so we manually built a [lookup table](https://github.com/WelshSean/JHU-DataScience-Capstone/blob/master/ExploratoryAnalysis.Rmd) to clean this and then evaluated it.
+
+```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
+yelpdata <- mutate(yelpdata, country= derivedFactor(
+               "DE" = state %in% c("NW", "RP", "BW"),
+               "UK" = state %in% c("EDH", "MLN", "FIF", "ELN", "XGL"),
+               "CA" = state %in% c("QC", "ON"),
+                 .method = "first",
+                 .default = "US"
+             )
+)
+
+tab <- yelpdata %>%
+   group_by(country) %>%
+   summarise(length(country))
+
+kable(tab, digits=2)
+```
+
+It's also informative to look at the distrinbution of the review scores.
+
+```{r cache=TRUE,echo=FALSE,warning=FALSE,error=FALSE,message=FALSE}
+startab <- as.data.frame(xtabs(formula=~stars+country, data=yelpdata))
+tottab <- as.data.frame(xtabs(formula=~stars, data=yelpdata))
+tottab[1:5,"country"] <- "Total"
+startab <- rbind(startab,tottab)
+sp <- ggplot(startab, aes(x=stars, y=Freq)) + geom_bar(stat="identity") + facet_grid(country ~ . , scales="free_y")
+sp
+```
+
 ## Preparation
 
 All code with a ReadMe to describe processing steps is on [github](https://github.com/WelshSean/JHU-DataScience-Capstone) in order to facilitate reproducability.
 
-The streaming JSON files as published by Yelp were downloaded and an [ER Diagram](https://github.com/WelshSean/JHU-DataScience-Capstone/blob/master/ER-Diagram.pdf) was built to relate all the quantities and the relevant keys. [R code](https://github.com/WelshSean/JHU-DataScience-Capstone/blob/master/RawDataAnalysis.R) was written to pull the relevant information from the files. Some preprocessing was done including limiting the analysis to Restaurants and then the data was split into training, validation and test sets in a 60:20:20 ratio. As this was a lengthy process, the data was saved to three RDA files.
+The streaming JSON files as published by Yelp were downloaded and an [ER Diagram](https://github.com/WelshSean/JHU-DataScience-Capstone/blob/master/ER-Diagram.pdf) was built to relate all the quantities and the relevant keys. [R code](https://github.com/WelshSean/JHU-DataScience-Capstone/blob/master/RawDataAnalysis.R) was written to pull the relevant information from the files. Some preprocessing was done including limiting the analysis to Restaurants and then the data was split into training, validation and test sets in a 60:20:20 ratio. As this was a lengthy process, the data was saved to three RDA files. 
+
+The summarised data then contains the following categories
+
+```{r}
+names(yelpdata)
+```
 
 The tm Text mining package was then used to extract the Corpus from the text. We then proceeded to apply standard transforms to the corpora in order to facilitate analysis. Punctation, numbers and whitespace was removed, all text was converted to lower case and standard English "stop-words" were removed using the facility provided by the tm framework.
 
